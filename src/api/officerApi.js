@@ -2,17 +2,17 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export async function fetchOfficerDashboardSummary(accessToken) {
   const response = await fetch(`${API_BASE_URL}/officer/dashboard-summary`, {
-    method: 'GET',
+    method: "GET",
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   });
 
   const result = await response.json();
 
   if (!response.ok) {
-    throw new Error(result.message || 'Failed to load officer dashboard.');
+    throw new Error(result.message || "Failed to load officer dashboard.");
   }
 
   return result;
@@ -20,17 +20,17 @@ export async function fetchOfficerDashboardSummary(accessToken) {
 
 export async function fetchOfficerActiveElection(accessToken) {
   const response = await fetch(`${API_BASE_URL}/officer/election/active`, {
-    method: 'GET',
+    method: "GET",
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   });
 
   const result = await response.json();
 
   if (!response.ok) {
-    throw new Error(result.message || 'Failed to load active election.');
+    throw new Error(result.message || "Failed to load active election.");
   }
 
   return result;
@@ -40,18 +40,18 @@ export async function fetchOfficerElectionSetup(accessToken, electionId) {
   const response = await fetch(
     `${API_BASE_URL}/officer/elections/${electionId}/setup`,
     {
-      method: 'GET',
+      method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-    }
+    },
   );
 
   const result = await response.json();
 
   if (!response.ok) {
-    throw new Error(result.message || 'Failed to load election setup.');
+    throw new Error(result.message || "Failed to load election setup.");
   }
 
   return result;
@@ -59,17 +59,34 @@ export async function fetchOfficerElectionSetup(accessToken, electionId) {
 
 export async function fetchOfficerPublishedResults(accessToken) {
   const response = await fetch(`${API_BASE_URL}/officer/results`, {
-    method: 'GET',
+    method: "GET",
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
   });
 
   const result = await response.json();
 
   if (!response.ok) {
-    throw new Error(result.message || 'Failed to load published results.');
+    throw new Error(result.message || "Failed to load published results.");
+  }
+
+  return result;
+}
+
+export async function fetchOfficerElections(accessToken) {
+  const response = await fetch(`${API_BASE_URL}/officer/elections`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Unable to load elections.");
   }
 
   return result;
