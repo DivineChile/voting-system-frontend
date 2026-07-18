@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+
 import { fetchElectionAIInsights } from "../api/aiElectionApi";
 
 const REFRESH_INTERVAL = 120000; // 2 minutes
 
-export default function useElectionAI(accessToken, electionId, electionStatus) {
+export default function useElectionAI(electionId, accessToken, electionStatus) {
   const [report, setReport] = useState(null);
 
   const [loading, setLoading] = useState(true);
@@ -18,33 +19,40 @@ export default function useElectionAI(accessToken, electionId, electionStatus) {
 
   const fetchInsights = useCallback(
     async (manual = false) => {
-      if (!electionId) return;
+      if (!electionId || !accessToken) {
+        return;
+      }
 
       try {
-        manual ? setRefreshing(true) : setLoading(true);
+        if (manual) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+
+          // Prevent showing the previous election while loading
+          setReport(null);
+        }
 
         setError(null);
 
-        const data = await fetchElectionAIInsights(accessToken, electionId);
+        const response = await fetchElectionAIInsights(accessToken, electionId);
 
-        setReport(data.data);
+        setReport(response);
+        console.log(response);
 
-        setLastUpdated(new Date());
+        // Prefer backend generation time
+        setLastUpdated(response.generatedAt || new Date().toISOString());
       } catch (err) {
         console.error(err);
 
-        setError(
-          err.response?.data?.message ||
-            err.message ||
-            "Unable to generate AI insights.",
-        );
+        setError(err.message || "Unable to generate AI election insights.");
       } finally {
         setLoading(false);
 
         setRefreshing(false);
       }
     },
-    [electionId],
+    [accessToken, electionId],
   );
 
   useEffect(() => {
@@ -65,9 +73,15 @@ export default function useElectionAI(accessToken, electionId, electionStatus) {
     }, REFRESH_INTERVAL);
 
     return () => {
-      clearInterval(intervalRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
     };
   }, [fetchInsights, electionStatus]);
+
+  const refresh = useCallback(() => {
+    fetchInsights(true);
+  }, [fetchInsights]);
 
   return {
     report,
@@ -80,6 +94,6 @@ export default function useElectionAI(accessToken, electionId, electionStatus) {
 
     lastUpdated,
 
-    refresh: () => fetchInsights(true),
+    refresh,
   };
 }

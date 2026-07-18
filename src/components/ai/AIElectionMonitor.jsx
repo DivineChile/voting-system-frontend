@@ -4,31 +4,20 @@ import AISkeleton from "./AISkeleton";
 import AIErrorState from "./AIErrorState";
 
 import AIHeader from "./AIHeader";
-import AIHealthScore from "./AIHealthScore";
-import AISummary from "./AISummary";
+import AIHealthCard from "./AIHealthCard";
+import AISummary from "./AISummaryCard";
 import AIObservationList from "./AIObservationList";
-import AIRiskList from "./AIRiskList";
 import AIRecommendationList from "./AIRecommendationList";
 import AILastUpdated from "./AILastUpdated";
+import AIRiskList from "./AIRiskList";
 
 export default function AIElectionMonitor({
   electionId,
   accessToken,
   electionStatus,
 }) {
-  const {
-    report,
-
-    loading,
-
-    error,
-
-    refresh,
-
-    refreshing,
-
-    lastUpdated,
-  } = useElectionAI(electionId, accessToken, electionStatus);
+  const { report, loading, error, refresh, refreshing, lastUpdated } =
+    useElectionAI(electionId, accessToken, electionStatus);
 
   if (loading) {
     return <AISkeleton />;
@@ -38,23 +27,29 @@ export default function AIElectionMonitor({
     return <AIErrorState message={error} onRetry={refresh} />;
   }
 
+  if (!report) {
+    return <AIErrorState message="No AI report available." onRetry={refresh} />;
+  }
+
+  const { intelligence, summary } = report;
+
   return (
     <div className="space-y-6">
-      <AIHeader refreshing={refreshing} onRefresh={refresh} />
-
-      <AIHealthScore health={report.intelligence.health} />
-
-      <AISummary summary={report.summary} />
-
-      <AIObservationList
-        observations={report.intelligence.positiveIndicators}
+      <AIHeader
+        election={intelligence.election}
+        refreshing={refreshing}
+        onRefresh={refresh}
       />
 
-      <AIRiskList risks={report.intelligence.riskIndicators} />
+      <AIHealthCard health={intelligence.health} />
 
-      <AIRecommendationList
-        recommendations={report.intelligence.recommendations}
-      />
+      <AISummary summary={summary} />
+
+      <AIObservationList observations={intelligence.positiveIndicators} />
+
+      <AIRiskList risks={intelligence.riskIndicators} />
+
+      <AIRecommendationList recommendations={intelligence.recommendations} />
 
       <AILastUpdated updatedAt={lastUpdated} />
     </div>

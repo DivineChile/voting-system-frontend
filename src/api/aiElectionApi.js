@@ -23,3 +23,19 @@ export async function fetchElectionAIInsights(accessToken, electionId) {
 
   return result;
 }
+
+export async function fetchAvailableElections(accessToken) {
+  const response = await fetch(`${API_BASE_URL}/ai/elections`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message);
+  }
+
+  return result.data;
+}

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ShieldCheck,
   Vote,
@@ -8,25 +8,30 @@ import {
   CheckCircle2,
   AlertCircle,
   UserCircle2,
-} from 'lucide-react';
-import { useAuth } from '../../contexts/auth-context';
-import { fetchOfficerDashboardSummary } from '../../api/officerApi';
+} from "lucide-react";
+import { useAuth } from "../../contexts/auth-context";
+import {
+  fetchOfficerDashboardSummary,
+  fetchOfficerElections,
+} from "../../api/officerApi";
+import AIElectionMonitor from "./../../components/ai/AIElectionMonitor";
+import ElectionSelector from "../../components/ai/AIElectionSelector";
 
-function ActionCard({ title, description, icon: Icon, to, tone = 'indigo' }) {
+function ActionCard({ title, description, icon: Icon, to, tone = "indigo" }) {
   const navigate = useNavigate();
 
   const toneStyles = {
     indigo: {
-      iconWrap: 'bg-[#EEEDFE]',
-      icon: 'text-[#534AB7]',
+      iconWrap: "bg-[#EEEDFE]",
+      icon: "text-[#534AB7]",
     },
     green: {
-      iconWrap: 'bg-[#E1F5EE]',
-      icon: 'text-[#0F6E56]',
+      iconWrap: "bg-[#E1F5EE]",
+      icon: "text-[#0F6E56]",
     },
     amber: {
-      iconWrap: 'bg-[#FAECE7]',
-      icon: 'text-[#993C1D]',
+      iconWrap: "bg-[#FAECE7]",
+      icon: "text-[#993C1D]",
     },
   };
 
@@ -37,7 +42,9 @@ function ActionCard({ title, description, icon: Icon, to, tone = 'indigo' }) {
       onClick={() => navigate(to)}
       className="text-left bg-white border border-gray-200 rounded-2xl p-5 flex flex-col gap-3 hover:border-gray-300 hover:bg-gray-50 hover:-translate-y-px active:scale-[.99] transition-all duration-150 min-h-[150px]"
     >
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${styles.iconWrap}`}>
+      <div
+        className={`w-10 h-10 rounded-xl flex items-center justify-center ${styles.iconWrap}`}
+      >
         <Icon size={18} className={styles.icon} strokeWidth={1.7} />
       </div>
 
@@ -54,24 +61,24 @@ function ActionCard({ title, description, icon: Icon, to, tone = 'indigo' }) {
 function QuickStats({ activeElection, loading }) {
   const items = [
     {
-      label: 'Officer access',
-      value: 'Read-only',
-      highlight: 'text-[#534AB7]',
+      label: "Officer access",
+      value: "Read-only",
+      highlight: "text-[#534AB7]",
     },
     {
-      label: 'Active election',
-      value: loading ? '...' : activeElection ? 'Available' : 'None',
-      highlight: activeElection ? 'text-[#0F6E56]' : '',
+      label: "Active election",
+      value: loading ? "..." : activeElection ? "Available" : "None",
+      highlight: activeElection ? "text-[#0F6E56]" : "",
     },
     {
-      label: 'Monitoring mode',
-      value: 'Enabled',
-      highlight: '',
+      label: "Monitoring mode",
+      value: "Enabled",
+      highlight: "",
     },
     {
-      label: 'Results access',
-      value: 'Published only',
-      highlight: '',
+      label: "Results access",
+      value: "Published only",
+      highlight: "",
     },
   ];
 
@@ -80,7 +87,9 @@ function QuickStats({ activeElection, loading }) {
       {items.map((item) => (
         <div key={item.label} className="rounded-xl bg-gray-100 px-4 py-3.5">
           <p className="text-[11px] text-gray-500 mb-1.5">{item.label}</p>
-          <p className={`text-[20px] font-medium ${item.highlight || 'text-gray-900'}`}>
+          <p
+            className={`text-[20px] font-medium ${item.highlight || "text-gray-900"}`}
+          >
             {item.value}
           </p>
         </div>
@@ -138,7 +147,7 @@ function StatusBanner({ activeElection, loading, errorMessage }) {
             {activeElection.title}
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-gray-500 max-w-2xl">
-            {activeElection.description || 'No description provided.'}
+            {activeElection.description || "No description provided."}
           </p>
         </div>
 
@@ -147,7 +156,8 @@ function StatusBanner({ activeElection, loading, errorMessage }) {
             Officer role
           </p>
           <p className="mt-1 text-sm text-gray-700">
-            You can review the election, monitor setup, and access published results.
+            You can review the election, monitor setup, and access published
+            results.
           </p>
         </div>
       </div>
@@ -167,7 +177,7 @@ function ProfileCard({ profile }) {
             Officer profile
           </p>
           <p className="mt-1 text-[15px] font-medium text-gray-900">
-            {profile?.full_name || 'Election Officer'}
+            {profile?.full_name || "Election Officer"}
           </p>
         </div>
       </div>
@@ -176,7 +186,7 @@ function ProfileCard({ profile }) {
         <div>
           <p className="text-[11px] text-gray-400">Email</p>
           <p className="text-sm text-gray-700 break-all">
-            {profile?.email || '—'}
+            {profile?.email || "—"}
           </p>
         </div>
 
@@ -196,68 +206,99 @@ function ProfileCard({ profile }) {
 
 export default function OfficerDashboardPage() {
   const { profile, session } = useAuth();
+
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const [elections, setElections] = useState([]);
+  const [selectedElectionId, setSelectedElectionId] = useState("");
 
   useEffect(() => {
-    async function loadSummary() {
+    async function loadDashboard() {
       try {
-        const result = await fetchOfficerDashboardSummary(session?.access_token);
-        setSummary(result.data || null);
+        const [summaryResult, electionsResult] = await Promise.all([
+          fetchOfficerDashboardSummary(session.access_token),
+          fetchOfficerElections(session.access_token),
+        ]);
+
+        setSummary(summaryResult.data || null);
+
+        const electionList = electionsResult.data || [];
+
+        setElections(electionList);
+
+        const defaultElection =
+          electionList.find((e) => e.status === "active") ||
+          electionList.find((e) => e.status === "published") ||
+          electionList.find((e) => e.status === "closed") ||
+          electionList.find((e) => e.status === "draft") ||
+          null;
+
+        if (defaultElection) {
+          setSelectedElectionId(defaultElection.id);
+        }
       } catch (error) {
-        setErrorMessage(error.message || 'Failed to load dashboard summary.');
+        setErrorMessage(error.message || "Failed to load dashboard.");
       } finally {
         setLoading(false);
       }
     }
 
     if (session?.access_token) {
-      loadSummary();
+      loadDashboard();
     }
   }, [session]);
+
+  const selectedElection = useMemo(() => {
+    return elections.find((e) => e.id === selectedElectionId) || null;
+  }, [elections, selectedElectionId]);
 
   const actions = useMemo(
     () => [
       {
-        title: 'View active election',
-        description: 'Monitor the currently open election and participating candidates.',
+        title: "View active election",
+        description:
+          "Monitor the currently open election and participating candidates.",
         icon: Vote,
-        to: '/officer/election',
-        tone: 'indigo',
+        to: "/officer/election",
+        tone: "indigo",
       },
       {
-        title: 'Review setup',
-        description: 'Inspect positions and candidates in read-only mode.',
+        title: "Review setup",
+        description: "Inspect positions and candidates in read-only mode.",
         icon: ClipboardList,
-        to: '/officer/setup',
-        tone: 'amber',
+        to: "/officer/setup",
+        tone: "amber",
       },
       {
-        title: 'View published results',
-        description: 'See officially published election outcomes when available.',
+        title: "View published results",
+        description:
+          "See officially published election outcomes when available.",
         icon: BarChart3,
-        to: '/officer/results',
-        tone: 'green',
+        to: "/officer/results",
+        tone: "green",
       },
     ],
-    []
+    [],
   );
 
   return (
     <div className="max-w-6xl">
       <div className="mb-6">
-        <h1 className="text-[20px] font-medium text-gray-900 mb-1">
-          Welcome back, {profile?.full_name || 'Election Officer'}
+        <h1 className="mb-1 text-[20px] font-medium text-gray-900">
+          Welcome back, {profile?.full_name || "Election Officer"}
         </h1>
+
         <p className="text-[13px] text-gray-500">
-          Monitor elections, review setup, and follow published results from one place.
+          Monitor elections, review setup, and follow published results from one
+          place.
         </p>
       </div>
 
       <QuickStats activeElection={summary?.active_election} loading={loading} />
 
-      <div className="mt-6 grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-5">
+      <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-[1fr_320px]">
         <div className="space-y-5">
           <StatusBanner
             activeElection={summary?.active_election}
@@ -265,11 +306,38 @@ export default function OfficerDashboardPage() {
             errorMessage={errorMessage}
           />
 
+          {/* =========================
+              AI Election Intelligence
+             ========================= */}
+
+          {selectedElection && (
+            <div className="rounded-xl border border-gray-200 bg-white p-5">
+              <div className="mb-5">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Election Intelligence
+                </label>
+
+                <ElectionSelector
+                  elections={elections}
+                  selectedElectionId={selectedElectionId}
+                  onChange={setSelectedElectionId}
+                />
+              </div>
+
+              <AIElectionMonitor
+                accessToken={session.access_token}
+                electionId={selectedElectionId}
+                electionStatus={selectedElection.status}
+              />
+            </div>
+          )}
+
           <div>
-            <p className="text-[11px] font-medium text-gray-400 tracking-widest uppercase mb-3">
+            <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-gray-400">
               Quick actions
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               {actions.map((action) => (
                 <ActionCard key={action.title} {...action} />
               ))}
