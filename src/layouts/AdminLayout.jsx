@@ -7,6 +7,7 @@ import {
   Clock,
   UserCheck,
   BarChart2,
+  TrendingUp,
   ScrollText,
   ShieldCheck,
   ClipboardCheck,
@@ -32,6 +33,7 @@ const NAV_SECTIONS = [
       { label: "Create Position", to: "/admin/positions/create", icon: Clock },
       { label: "Create Candidate", to: "/admin/candidates/create", icon: UserCheck },
       { label: "Results", to: "/admin/results", icon: BarChart2 },
+      { label: "Analytics", to: "/admin/analytics", icon: TrendingUp },
     ],
   },
   {
@@ -178,6 +180,13 @@ function getPageMeta(pathname) {
     return {
       title: "Results",
       subtitle: "View vote counts and winners",
+    };
+  }
+
+  if (pathname === "/admin/analytics") {
+    return {
+      title: "Analytics",
+      subtitle: "Cross-election turnout, participation, and trends",
     };
   }
 

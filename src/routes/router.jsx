@@ -9,6 +9,7 @@ import OfficerLayout from '../layouts/OfficerLayout';
 
 // Admin Routes
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
+import AdminAnalyticsPage from '../pages/admin/AdminAnalyticsPage';
 import AdminResultsPage from '../pages/admin/AdminResultsPage';
 import AuditLogsPage from '../pages/admin/AuditLogsPage';
 import CreateElectionPage from '../pages/admin/CreateElectionPage';
@@ -81,6 +82,10 @@ export const router = createBrowserRouter([
       {
         path: "results",
         element: <AdminResultsPage />,
+      },
+      {
+        path: "analytics",
+        element: <AdminAnalyticsPage />,
       },
       {
         path: "audit-logs",
